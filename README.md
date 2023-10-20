@@ -9,7 +9,7 @@ Supercon 2023 Badge Expansion
 * red PCB incase the case doesnt print / get designed in time
 * white printed/spray painted control knobs
 * flip-to-erase
-  * accelerometer with available circuit python library
+  * accelerometer with available micropython library
   * simple tilt switch if $$ getting $$$
 * header pass through presents same mounting points / spacing for additional expansion boards
 
