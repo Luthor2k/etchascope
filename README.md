@@ -1,6 +1,8 @@
 # EtchaSkope
 Supercon 2023 Badge Expansion
 
+![](https://github.com/Luthor2k/etchaskope/blob/main/render.png)
+
 ### Critical Features
 * badge; round LCD so polar coordinate system
   * one rotary potentiometer
