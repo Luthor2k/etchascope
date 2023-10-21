@@ -11202,6 +11202,12 @@
   (gr_text "github.com/Luthor2k/etchaskope" (at 173.228 134.874 90) (layer "F.SilkS") (tstamp 71154e6c-204e-4094-aa91-df35db97af04)
     (effects (font (size 1 1) (thickness 0.15)) (justify left bottom))
   )
+  (gr_text "SUPERCON'23" (at 144 144.4 90) (layer "F.SilkS") (tstamp 7ea7601e-556a-4202-b460-3e7385437b29)
+    (effects (font (size 2 2) (thickness 0.15)) (justify left bottom))
+  )
+  (gr_text "HACKADAY\nSUPERCONFERENCE\n2023" (at 95.5 120.9 90) (layer "User.2") (tstamp a4f29935-ff68-4ec7-ab99-02ae3d1cd065)
+    (effects (font (size 1.6 1.6) (thickness 0.15)) (justify left bottom))
+  )
 
   (segment (start 149.822 40.37) (end 148.1625 40.37) (width 0.25) (layer "F.Cu") (net 1) (tstamp 8840e902-a33f-4d2d-9014-980e2ffd29d6))
   (segment (start 148.1625 40.37) (end 147.25 41.2825) (width 0.25) (layer "F.Cu") (net 1) (tstamp fd076ed5-39de-4743-8c87-2fb6c3f578ea))
