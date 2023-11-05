@@ -9,23 +9,46 @@ import time
 import math
 
 # Constants
-ADXL345_ADDRESS = 0x53
-ADXL345_POWER_CTL = 0x2D
-ADXL345_DATA_FORMAT = 0x31
-ADXL345_DATAX0 = 0x32
- 
-# Initialize ADXL345
-def init_adxl345():
-    i2c.writeto_mem(ADXL345_ADDRESS, ADXL345_POWER_CTL, bytearray([0x08]))  # Set bit 3 to 1 to enable measurement mode
-    i2c.writeto_mem(ADXL345_ADDRESS, ADXL345_DATA_FORMAT, bytearray([0x0B]))  # Set data format to full resolution, +/- 16g
- 
-# Read acceleration data
-def read_accel_data():
-    data = i2c.readfrom_mem(ADXL345_ADDRESS, ADXL345_DATAX0, 6)
-    x, y, z = ustruct.unpack('<3h', data)
-    return x, y, z
 
+# I2C address
+ADXL343_ADDR = 0x53
 
+# Registers
+REG_DEVID = 0x00
+REG_POWER_CTL = 0x2D
+REG_DATAX0 = 0x32
+
+# Other constants
+DEVID = 0xE5
+SENSITIVITY_2G = 1.0 / 256  # (g/LSB)
+EARTH_GRAVITY = 9.80665     # Earth's gravity in [m/s^2]
+ 
+def reg_write(i2c, addr, reg, data):
+    """
+    Write bytes to the specified register.
+    """
+    
+    # Construct message
+    msg = bytearray()
+    msg.append(data)
+    
+    # Write out message to register
+    i2c.writeto_mem(addr, reg, msg)
+    
+def reg_read(i2c, addr, reg, nbytes=1):
+    """
+    Read byte(s) from specified register. If nbytes > 1, read from consecutive
+    registers.
+    """
+    
+    # Check to make sure caller is asking for 1 or more bytes
+    if nbytes < 1:
+        return bytearray()
+    
+    # Request data from specified register(s) over I2C
+    data = i2c.readfrom_mem(addr, reg, nbytes)
+    
+    return data
 
 class Screen():
     def __init__(self, softSPI=False):
@@ -69,40 +92,41 @@ if __name__ == "__main__":
     ## For everything you can do with the GC9A01 library:
     ## https://github.com/russhughes/gc9a01_mpy
 
-    #s.tft.fill(gc9a01.BLUE)
-    #time.sleep_ms(1000)
-    #s.tft.fill(gc9a01.YELLOW)
-    #time.sleep_ms(1000)
     s.tft.fill(gc9a01.BLACK)
 
     phosphor_bright = gc9a01.color565(120, 247, 180)
     phosphor_dark   = gc9a01.color565(45, 217, 80)
 
-    '''
-
-    ## better graphic demo should go here
-    for i in range(2):
-        x1 = random.randint(0, 240)
-        x2 = random.randint(0, 240)
-        y1 = random.randint(0, 240)
-        y2 = random.randint(0, 240)
-
-        if i % 2:
-            s.tft.line(x1, y1, x2, y2, phosphor_bright)
-        else:
-            s.tft.line(x1, y1, x2, y2, phosphor_dark)
-        time.sleep_ms(20)
-    '''
-
     # Initialize I2C
-    i2c = I2C(1, sda=Pin(pin_defs.i2c_exp_sda), scl=Pin(pin_defs.i2c_exp_scl), freq=400000)   
+    i2c = I2C(1, sda=Pin(14), scl=Pin(15), freq=100000)   
+
     # Print out any addresses found
     devices = i2c.scan()
 
     if devices:
         for d in devices:
             print(hex(d))
-    
+
+    #initialize the ADXL345
+    # Read device ID to make sure that we can communicate with the ADXL343
+    data = reg_read(i2c, ADXL343_ADDR, REG_DEVID)
+    if (data != bytearray((DEVID,))):
+        print("ERROR: Could not communicate with ADXL343")
+        sys.exit()
+        
+    # Read Power Control register
+    data = reg_read(i2c, ADXL343_ADDR, REG_POWER_CTL)
+    print(data)
+
+    # Tell ADXL343 to start taking measurements by setting Measure bit to high
+    data = int.from_bytes(data, "big") | (1 << 3)
+    reg_write(i2c, ADXL343_ADDR, REG_POWER_CTL, data)
+
+    # Test: read Power Control register back to make sure Measure bit was set
+    data = reg_read(i2c, ADXL343_ADDR, REG_POWER_CTL)
+    print(data)
+
+    #attach rotary interrupt
     r = RotaryIRQ(pin_num_clk=26,
               pin_num_dt=27,
               pull_up=True,
@@ -113,24 +137,45 @@ if __name__ == "__main__":
 
     val_old = r.value()
     
-    adc = ADC(Pin(28))     # create ADC object on ADC pin
-    test_adc_value = adc.read_u16()  
-    print("test_adc_value = ", test_adc_value)
+    adc = ADC(Pin(28))     # create ADC object on linear pot pin
 
     while True:
         val_new = r.value()
+        slider_adc_value = 65536 - adc.read_u16()  #invert so the linear pot is 'distance from center'
+
+        # Read X, Y, and Z values from registers (16 bits each)
+        data = reg_read(i2c, ADXL343_ADDR, REG_DATAX0, 6)
+
+        # Convert 2 bytes (little-endian) into 16-bit integer (signed)
+        acc_x = ustruct.unpack_from("<h", data, 0)[0]
+        acc_y = ustruct.unpack_from("<h", data, 2)[0]
+        acc_z = ustruct.unpack_from("<h", data, 4)[0]
+
+        # Convert measurements to [m/s^2]
+        acc_x = acc_x * SENSITIVITY_2G * EARTH_GRAVITY
+        acc_y = acc_y * SENSITIVITY_2G * EARTH_GRAVITY
+        acc_z = acc_z * SENSITIVITY_2G * EARTH_GRAVITY
 
         if val_old != val_new:
             val_old = val_new
-            rads = 2*math.pi*(float(val_new/360))
-            arc_x = math.cos(rads) * 120 + 120
-            arc_y = math.sin(rads) * -120 + 120
-            print('result =', val_new, "arc_x = ", arc_x, "arc_y = ", arc_y)
-            #s.tft.line(120, 120, int(arc_x), int(arc_y), phosphor_bright)
-            s.tft.pixel(int(arc_x), int(arc_y), phosphor_bright)
 
-        test_adc_value = adc.read_u16()  
-        print("test_adc_value = ", test_adc_value)
+            rads = 2*math.pi*(float(val_new/360))
+            print("rads: ", rads)
+
+            print("slider_adc_value = ", slider_adc_value)
+            slider_factor = 120 * slider_adc_value / 65536
+            print("slider_factor = ", slider_factor)
+
+            #draw a pixel slider_factor between the center and the edge
+            etch_x = int(math.cos(rads) * slider_factor) + 120
+            etch_y = int(math.sin(rads) * -1 * slider_factor) + 120
+            print("etch_x = ", etch_x, "etch_y = ", etch_y)
+            s.tft.pixel(etch_x, etch_y, phosphor_bright)
+
+        if acc_z < -5:
+            s.tft.fill(gc9a01.BLACK)
+            print("flipped!")
+
         time.sleep_ms(50)
 
 
