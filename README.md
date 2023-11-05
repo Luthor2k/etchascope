@@ -16,9 +16,9 @@ Supercon 2023 Badge Expansion
 * header pass through presents same mounting points / spacing for additional expansion boards
 
 ### TODO
-* component selection
-* pcb design
-* pcb submission
-* enclosure design
-* print enclosures
-* spray knobs
+* component selectionDONE
+* pcb designDONE
+* pcb submissionDONE
+* enclosure designNOTHAPPENING
+* print enclosures; Knobs printed last minute in white PLA by SethK, thanks Seth!
+* spray knobsNOTREQ
