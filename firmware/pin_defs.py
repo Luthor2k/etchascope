@@ -28,7 +28,9 @@ i2c_scl   = const(21)
 i2c_sda   = const(20)
 
 
-
+#Exp pins
+i2c_exp_scl = const(15)
+i2c_exp_sda = const(14)
 
 ## some globally useful pin inits
 # debug_pin          = machine.Pin(debug, machine.Pin.OUT, value=0)

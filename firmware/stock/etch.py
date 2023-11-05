@@ -5,6 +5,18 @@ import joystick
 import vectoros
 from vos_state import vos_state
 import gc9a01
+from machine import Pin, SoftI2C
+import time
+import ustruct
+
+
+# Constants
+ADXL345_ADDRESS = 0x53
+ADXL345_POWER_CTL = 0x2D
+ADXL345_DATA_FORMAT = 0x31
+ADXL345_DATAX0 = 0x32
+
+
 
 # little etch-a-sketch demo, modded for etch-a-skope functionality
 
@@ -113,6 +125,9 @@ def blue(key):
 def black(key): 
     global color
     color=gc9a01.BLACK
+    x, y, z = read_accel_data()
+    print("X: {}, Y: {}, Z: {}".format(x, y, z))
+
 def white(key):   # erase
     global color
     color=gc9a01.WHITE
@@ -143,14 +158,46 @@ csel=keyboardcb.KeyboardCB({ keyleds.KEY_LEVEL: white, keyleds.KEY_A: black,
 import asyncio
 import gc
 
+# Initialize ADXL345
+def init_adxl345(i2c):
+    i2c.writeto_mem(ADXL345_ADDRESS, ADXL345_POWER_CTL, bytearray([0x08]))  # Set bit 3 to 1 to enable measurement mode
+    i2c.writeto_mem(ADXL345_ADDRESS, ADXL345_DATA_FORMAT, bytearray([0x0B]))  # Set data format to full resolution, +/- 16g
+    
+# Read acceleration data
+def read_accel_data():
+    data = i2c.readfrom_mem(ADXL345_ADDRESS, ADXL345_DATAX0, 6)
+    x, y, z = ustruct.unpack('<3h', data)
+    return x, y, z
+
 async def vos_main():
+    #pins
+    PICO_SDA_PIN = const(14)
+    PICO_SCL_PIN = const(15)
+
     global stopflag
+    
     if keyboardcb.KeyboardCB.task==None:
         keyboardcb.KeyboardCB.run(100)  # start keyboard service
     cls(None)                 # zero out model and draw
     joy.attach()
     btn.attach()
     csel.attach()
+    '''
+    # Initialize I2C and accelerometer
+    i2c = I2C(1, sda=Pin(PICO_SDA_PIN), scl=Pin(PICO_SCL_PIN), freq=400000)
+    #init_adxl345(i2c)
+    # Print out any addresses found
+    devices = i2c.scan()
+    print(devices)
+
+    if devices:
+        for d in devices:
+            print(hex(d))
+    
+    extI2C = SoftI2C(sda=Pin(PICO_SDA_PIN), scl=Pin(PICO_SCL_PIN), freq=400000)
+    devices = extI2C.scan()
+    print(devices)
+    '''
 
     while stopflag==False:
         await asyncio.sleep(5)
