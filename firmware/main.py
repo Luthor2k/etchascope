@@ -1,4 +1,4 @@
-from machine import Pin, SPI, SoftSPI, I2C
+from machine import Pin, SPI, SoftSPI, I2C,ADC
 import pin_defs
 import gc9a01
 import gc
@@ -112,6 +112,10 @@ if __name__ == "__main__":
               range_mode=RotaryIRQ.RANGE_WRAP)
 
     val_old = r.value()
+    
+    adc = ADC(Pin(28))     # create ADC object on ADC pin
+    test_adc_value = adc.read_u16()  
+    print("test_adc_value = ", test_adc_value)
 
     while True:
         val_new = r.value()
@@ -125,7 +129,9 @@ if __name__ == "__main__":
             #s.tft.line(120, 120, int(arc_x), int(arc_y), phosphor_bright)
             s.tft.pixel(int(arc_x), int(arc_y), phosphor_bright)
 
-        time.sleep_ms(20)
+        test_adc_value = adc.read_u16()  
+        print("test_adc_value = ", test_adc_value)
+        time.sleep_ms(50)
 
 
 
