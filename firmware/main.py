@@ -6,6 +6,7 @@ import rp2
 import sys
 from rotary_irq_rp2 import RotaryIRQ
 import time
+import ustruct
 import math
 
 # Constants
