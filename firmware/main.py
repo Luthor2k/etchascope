@@ -133,6 +133,7 @@ if __name__ == "__main__":
               pull_up=True,
               min_val=0,
               max_val=360,
+              incr=2,
               reverse=False,
               range_mode=RotaryIRQ.RANGE_WRAP)
 
@@ -171,7 +172,8 @@ if __name__ == "__main__":
             etch_x = int(math.cos(rads) * slider_factor) + 120
             etch_y = int(math.sin(rads) * -1 * slider_factor) + 120
             print("etch_x = ", etch_x, "etch_y = ", etch_y)
-            s.tft.pixel(etch_x, etch_y, phosphor_bright)
+            #s.tft.pixel(etch_x, etch_y, phosphor_bright)
+            s.tft.fill_rect(etch_x - 1, etch_y - 1, 3, 3, phosphor_bright)
 
         if acc_z < -5:
             s.tft.fill(gc9a01.BLACK)
