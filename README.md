@@ -2,7 +2,7 @@
 Supercon 2023 Badge Expansion
 ![](https://github.com/Luthor2k/etchaskope/blob/main/PXL_20231105_184911557.jpg)
 
-##Two bodge wires needed!
+## Two bodge wires needed!
 The high speed DAQ on the badge was the wrong choice, reroute the linear pot to the RP2040 ADC. Also need to bring 3.3V to a pull up because of a routing mistake.
 ![](https://github.com/Luthor2k/etchaskope/blob/main/PXL_20231105_184545390.jpg)
 ![](https://github.com/Luthor2k/etchaskope/blob/main/PXL_20231105_184605957.jpg)
